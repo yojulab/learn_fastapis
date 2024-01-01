@@ -10,10 +10,10 @@ class Todo(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
+        self,
         item: str = Form(...)
     ):
-        return cls(item=item)
+        return self(item=item)
 
 
     class Config:

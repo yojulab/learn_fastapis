@@ -12,6 +12,8 @@ templates = Jinja2Templates(directory="templates/")
 
 @todo_router.post("/")
 async def add_todo(request: Request, todo: Todo = Depends(Todo.as_form)):
+    form_data = await request.form()
+    form_data['item']
     todo.id = len(todo_list) + 1
     todo_list.append(todo)
     return templates.TemplateResponse("todos/todo.html",
