@@ -26,7 +26,7 @@ if __name__ == "__main__":
         obj = {
             "name": name,
             "email": generate_random_email(name.lower()),
-            "pswd": generate_random_password(10),
+            "password": generate_random_password(10),
             "manager": random.choice(["on", "off"]),
             "sellist1": random.choice(["Option1", "Option2", "Option3"]),
             "text": f"안녕하세요. {name}입니다."

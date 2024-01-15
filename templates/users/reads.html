@@ -4,7 +4,7 @@
 {% block main_container %}
 
 <h2>회원 상세보기</h2>
-{{ user }}
+<!-- {{ user }} -->
 <form action="">
     <div class="mb-3 mt-3">
         <label for="email" class="form-label">Email:</label>
@@ -36,7 +36,7 @@
             {{ user.text}}
         </textarea>
     </div>
-    <div class="text-end">
+    <div class="m-3 text-end">
         <button type="submit" class="btn btn-primary" formaction="/user/list" formmethod="get">List</button>
         <button type="submit" class="btn btn-danger" formaction="/user/list" formmethod="post">Delete</button>
     </div>

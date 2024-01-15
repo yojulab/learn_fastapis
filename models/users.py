@@ -8,7 +8,6 @@ class User(Document):
     name: Optional[str] = None
     email: EmailStr
     password: str
-    pswd: Optional[str] = None
     manager: Optional[str] = None
     sellist1 : Optional[str] = None
     text : Optional[str] = None
