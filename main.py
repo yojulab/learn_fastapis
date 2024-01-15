@@ -4,8 +4,6 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.connection import Settings
-from routes.events import event_router
-from routes.users import user_router
 
 app = FastAPI()
 
@@ -24,9 +22,13 @@ app.add_middleware(
 )
 
 # 라우트 등록
+from routes.events import event_router
+from routes.users import router as user_router
+from routes.homes import router as home_router
 
 app.include_router(user_router, prefix="/user")
 app.include_router(event_router, prefix="/event")
+app.include_router(home_router, prefix="/home")
 
 
 @app.on_event("startup")
@@ -34,9 +36,27 @@ async def init_db():
     await settings.initialize_database()
 
 
+# @app.get("/")
+# async def home():
+#     return RedirectResponse(url="/event/")
+
+from fastapi.staticfiles import StaticFiles
+# url 경로, 자원 물리 경로, 프로그램밍 측면
+import os
+static_css_directory = os.path.join("resources", "css")
+static_images_directory = os.path.join("resources", "images")
+app.mount("/css", StaticFiles(directory=static_css_directory), name="static_css")
+app.mount("/images", StaticFiles(directory=static_images_directory), name="static_images")
+
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
+# html 들이 있는 폴더 위치
+templates = Jinja2Templates(directory="templates/")
+
 @app.get("/")
-async def home():
-    return RedirectResponse(url="/event/")
+async def root(request:Request):
+    # return {"message": "jisu World"}
+    return templates.TemplateResponse("main.html",{'request':request})
 
 
 if __name__ == '__main__':

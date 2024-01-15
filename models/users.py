@@ -1,11 +1,17 @@
+from typing import Optional, List
 from beanie import Document
 
 from pydantic import BaseModel, EmailStr
 
 
 class User(Document):
+    name: Optional[str] = None
     email: EmailStr
     password: str
+    pswd: Optional[str] = None
+    manager: Optional[str] = None
+    sellist1 : Optional[str] = None
+    text : Optional[str] = None
 
     class Settings:
         name = "users"
