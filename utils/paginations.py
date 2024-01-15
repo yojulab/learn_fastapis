@@ -60,21 +60,22 @@ class Paginations:
     
     def _calculate_start_record_number(self):
         # 현재 페이지 번호와 페이지 당 레코드 수를 곱한 후 페이지 당 레코드 수를 빼고 1을 더하여 현재 페이지의 시작 레코드 번호를 계산
-        return (self.current_page * self.records_per_page) - self.records_per_page + 1    
+        return ((self.current_page * self.records_per_page) - self.records_per_page + 1) - 1
 
 if __name__ == "__main__":
     # 예시 사용:
-    total_records = [12,120]  # 총 레코드 수
-    current_pages_list = [[1, 2,], [3, 7, 14, 30,],]  # 현재 페이지 번호
+    total_records = [4, 12,120]  # 총 레코드 수
+    current_pages_list = [[1], [1, 2,], [3, 7, 14, 30,],]  # 현재 페이지 번호
 
     for total_record, current_pages in zip(total_records, current_pages_list):
         for current_page in current_pages :
             pagination = Paginations(total_record, current_page)
 
-            print('총 레코드:{} / 총 블럭:{}, 현재:{} / page:{}'
+            print('총 레코드:{} / 총 블럭:{}, 현재:{} / page:{}, 시작번호 : {}'
                 .format(pagination.total_records
                         ,pagination.total_pages,pagination.current_block
-                        ,pagination.current_page))
+                        ,pagination.current_page
+                        ,pagination.start_record_number))
             
             page_tag_tuple = (pagination.has_previous_block, pagination.first_page
                             , pagination.has_previous_page, pagination.previous_page

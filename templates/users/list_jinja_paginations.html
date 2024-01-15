@@ -34,7 +34,7 @@
     <tbody>
       {% for user in users %}
       <tr>
-        <td>{{pagination.start_record_number + loop.index0}}</td>
+        <td>{{pagination.start_record_number + loop.index}}</td>
         <td>{{user.name}}</td>
         <td>{{user.email | length}}, {{user.email}}</td>
         <td><button formaction="/user/read/{{user.id}}">read</button></td>
