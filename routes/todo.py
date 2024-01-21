@@ -3,14 +3,14 @@ from fastapi.templating import Jinja2Templates
 
 from models.todos import Todo, TodoItem, TodoItems
 
-todo_router = APIRouter()
+router = APIRouter()
 
 todo_list = []
 
 templates = Jinja2Templates(directory="templates/")
 
 
-@todo_router.post("/")
+@router.post("/")
 async def add_todo(request: Request, todo: Todo = Depends(Todo.as_form)):
     form_data = await request.form()
     form_data['item']
@@ -23,7 +23,7 @@ async def add_todo(request: Request, todo: Todo = Depends(Todo.as_form)):
     })
 
 
-@todo_router.get("/", response_model=TodoItems)
+@router.get("/", response_model=TodoItems)
 async def retrieve_todo(request: Request):
     return templates.TemplateResponse("todos/todo.html", {
         "request": request,
@@ -32,7 +32,7 @@ async def retrieve_todo(request: Request):
 
 
 
-@todo_router.get("/{todo_id}")
+@router.get("/{todo_id}")
 async def get_single_todo(request: Request, todo_id: int = Path(..., title="The ID of the todo to retrieve.")):
     for todo in todo_list:
         if todo.id == todo_id:
@@ -48,7 +48,7 @@ async def get_single_todo(request: Request, todo_id: int = Path(..., title="The 
 
 
 
-@todo_router.put("/{todo_id}")
+@router.put("/{todo_id}")
 async def update_todo(request: Request, todo_data: TodoItem,
                       todo_id: int = Path(..., title="The ID of the todo to be updated.")) -> dict:
     for todo in todo_list:
@@ -64,7 +64,7 @@ async def update_todo(request: Request, todo_data: TodoItem,
     )
 
 
-@todo_router.delete("/{todo_id}")
+@router.delete("/{todo_id}")
 async def delete_single_todo(request: Request, todo_id: int) -> dict:
     for index in range(len(todo_list)):
         todo = todo_list[index]
@@ -79,7 +79,7 @@ async def delete_single_todo(request: Request, todo_id: int) -> dict:
     )
 
 
-@todo_router.delete("/")
+@router.delete("/")
 async def delete_all_todo() -> dict:
     todo_list.clear()
     return {

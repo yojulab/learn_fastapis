@@ -13,7 +13,7 @@ async def home():
     # return {"message": "home World"}
     html = "<body> <h2>it's Home</h2> </body>"
     return html
-# @ = Annotation  / 체질을 바꿔주는 역할 / 웹에서 펑션 호출
+
 @router.get("/list") # 주로 2단계까지만 연결
 async def home_list() :
     # pass
