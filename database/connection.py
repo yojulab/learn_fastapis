@@ -21,6 +21,8 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 from utils.paginations import Paginations
+
+import json
 class Database:
     def __init__(self, model):
         self.model = model
@@ -38,6 +40,18 @@ class Database:
     async def get_all(self):
         docs = await self.model.find_all().to_list()
         return docs
+
+    async def update_withjson(self, id: PydanticObjectId, body: json):
+        doc_id = id
+
+        des_body = {k: v for k, v in des_body.items() if v is not None}
+        update_query = {"$set": {**body}}
+
+        doc = await self.get(doc_id)
+        if not doc:
+            return False
+        await doc.update(update_query)
+        return doc
 
     async def update(self, id: PydanticObjectId, body: BaseModel):
         doc_id = id
