@@ -30,7 +30,7 @@ from routes.todo import router as todo_router
 
 app.include_router(user_router, prefix="/user")
 app.include_router(event_router, prefix="/event")
-app.include_router(event_api_router, prefix="/event_api")
+app.include_router(event_api_router, prefix="/events_api")
 app.include_router(home_router, prefix="/home")
 app.include_router(todo_router, prefix="/todo")
 

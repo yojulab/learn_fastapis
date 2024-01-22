@@ -54,15 +54,16 @@ async def update_event(id: PydanticObjectId, body: EventUpdate) -> Event:
         )
     return updated_event
 
-import json
+from fastapi import Request
 @router.put("/{id}", response_model=Event)
-async def update_event_withjson(id: PydanticObjectId, body: json) -> Event:
+async def update_event_withjson(id: PydanticObjectId, request:Request) -> Event:
     event = await event_database.get(id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found"
         )
+    body = await request.json()
     updated_event = await event_database.update_withjson(id, body)
     if not updated_event:
         raise HTTPException(

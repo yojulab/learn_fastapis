@@ -41,10 +41,11 @@ class Database:
         docs = await self.model.find_all().to_list()
         return docs
 
+    # update with params json
     async def update_withjson(self, id: PydanticObjectId, body: json):
         doc_id = id
 
-        des_body = {k: v for k, v in des_body.items() if v is not None}
+        # des_body = {k: v for k, v in des_body.items() if v is not None}
         update_query = {"$set": {**body}}
 
         doc = await self.get(doc_id)
@@ -52,7 +53,7 @@ class Database:
             return False
         await doc.update(update_query)
         return doc
-
+    
     async def update(self, id: PydanticObjectId, body: BaseModel):
         doc_id = id
         des_body = body.dict()
