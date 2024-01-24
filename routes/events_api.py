@@ -55,7 +55,7 @@ async def update_event(id: PydanticObjectId, body: EventUpdate) -> Event:
     return updated_event
 
 from fastapi import Request
-@router.put("/{id}", response_model=Event)
+@router.put("/request/{id}", response_model=Event)
 async def update_event_withjson(id: PydanticObjectId, request:Request) -> Event:
     event = await event_database.get(id)
     if not event:
