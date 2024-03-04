@@ -20,26 +20,22 @@
     <nav class="container">
         <form action="">
             <ul class="nav justify-content-center">
-                <li class="nav-item">
-                    <a class="nav-link" href="/home">Home</a>
-                </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link" href="/home/params_query">Home params_query</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/home/list">Home list</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link" href="/user/form">회원가입 폼</a>
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Samples</a>
+                    <ul class="dropdown-menu">
+                        <a class="nav-link" href="/home">Containers</a>
+                        <a class="nav-link" href="/home/list">request url</a>
+                        <a class="nav-link" href="/home/params_query">params_query</a>
+                    </ul>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Users</a>
                     <ul class="dropdown-menu">
-                        <li class="nav-item"><a href="/user/form">form</a></li>
-                        <li class="nav-item"><a href="/user/list">list</a></li>
-                        <li class="nav-item"><a href="/user/list_jinja">list_jinja</a></li>
-                        <li class="nav-item"><a href="/user/search">search</a></li>
-                        <li class="nav-item"><a href="/user/list_jinja_pagination">list_jinja_pagination</a></li>
+                        <li><a class="dropdown-item" href="/user/form">form</a></li>
+                        <li><a class="dropdown-item" href="/user/list">list</a></li>
+                        <li><a class="dropdown-item" href="/user/list_jinja">list_jinja</a></li>
+                        <li><a class="dropdown-item" href="/user/search">search</a></li>
+                        <li><a class="dropdown-item" href="/user/list_jinja_pagination">list_jinja_pagination</a></li>
                     </ul>
                 </li>
             </ul>

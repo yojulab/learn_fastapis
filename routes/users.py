@@ -121,7 +121,7 @@ async def list(request:Request):
 # mongoClient = MongoClient("mongodb://localhost:27017")
 
 # # database 연결
-# database = mongoClient["toy_fastapis"]
+# database = mongoClient["learn_fastapis"]
 
 # # collection 작업
 # collection = database['users']
