@@ -1,17 +1,31 @@
 {% extends "main_template.html"%}
 
-<title>회원 상세보기</title>
-{% block main_container %}
+{% block title %}
+회원 상세보기
+{% endblock %}
 
+{% block css %}
+<!-- Quill의 CSS 파일 링크 -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.0-beta.0/dist/quill.snow.css" rel="stylesheet" />
+  <!-- Quill 편집기의 스타일 지정 -->
+  <style>
+    #editor {
+        height: 10rem;
+      }
+  
+  </style>
+{% endblock %}
+
+{% block main_container %}
 <h2>회원 상세보기</h2>
 <!-- {{ user }} -->
 <form action="">
     <div class="mb-3 mt-3">
-        <label for="email" class="form-label">Email:</label>
+        <label class="form-label">Email:</label>
         {{ user.email }}
     </div>
     <div class="mb-3">
-        <label for="pwd" class="form-label">Password:</label>
+        <label class="form-label">Password:</label>
         ******************
     </div>
     <div class="form-check mb-3">
@@ -32,13 +46,37 @@
     </div>
     <div>
         <label for="comment">Comments:</label>
-        <textarea class="form-control" rows="5" id="comment" name="text" disabled>
-            {{ user.text}}
+        <textarea class="form-control" rows="5" id="comment" name="comment" disabled>
+            {{ user.comment}}
         </textarea>
     </div>
+    <div>
+        <label>Comments with Quill:</label>
+        <!-- Quill 편집기를 적용할 div 요소 -->
+        <div id="editor"></div>
+    </div>
+
     <div class="m-3 text-end">
         <button type="submit" class="btn btn-primary" formaction="/user/list" formmethod="get">List</button>
         <button type="submit" class="btn btn-danger" formaction="/user/list" formmethod="post">Delete</button>
     </div>
 </form>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.0-beta.0/dist/quill.js"></script>
+<script>
+    // 서버나 다른 소스에서 로드한 콘텐츠를 대표하는 가상의 데이터
+    let contentFromServer = '{{user.editorContent | safe}}';
+
+    // Quill 편집기 초기화
+    let quill = new Quill('#editor', {
+        theme: 'snow',
+        readOnly: true, // 읽기 전용으로 설정
+        modules: {
+            toolbar: false // 툴바 비활성화
+        }        
+    });
+
+    // 서버에서 가져온 콘텐츠로 편집기를 채움
+    quill.root.innerHTML = contentFromServer;
+</script>
 {% endblock %}

@@ -6,7 +6,7 @@
 
 {% block css %}
 <!-- Quill의 CSS 파일 링크 -->
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.0-beta.0/dist/quill.snow.css" rel="stylesheet" />
   <!-- Quill 편집기의 스타일 지정 -->
   <style>
     #editor {
@@ -26,7 +26,7 @@
 <form action="" id="form_first">
     <div class="mb-3 mt-3">
         <label for="name" class="form-label">Name:</label>
-        <input type="text" class="form-control" placeholder="Enter Name" name="name">
+        <input type="text" class="form-control" placeholder="Enter Name" name="name" id="name">
     </div>
     <div class="mb-3 mt-3">
         <label for="email" class="form-label">Email:</label>
@@ -52,10 +52,10 @@
     </div>
     <div>
         <label for="comment">Comments:</label>
-        <textarea class="form-control" rows="5" id="comment" name="text"></textarea>
+        <textarea class="form-control" rows="5" id="comment" name="comment"></textarea>
     </div>
     <div>
-        <label for="comment">Comments with Quill:</label>
+        <label>Comments with Quill:</label>
         <!-- Quill 편집기를 적용할 div 요소 -->
         <input type="hidden" name="editorContent" id="editorContent">
         <div id="editor"></div>
@@ -68,17 +68,18 @@
 
 </form>
 <!-- Quill의 JavaScript 파일 링크 -->
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.0-beta.0/dist/quill.js"></script>
 
 <!-- Quill 편집기 초기화 스크립트 -->
 <script>
     var quill = new Quill('#editor', {
         theme: 'snow'
     });
-    let form = document.getSelection('#form_first');
-    form.onsubmit = function() {
-      let editorContentInput = document.getSelection('#editorContent');
-      editorContentInput.value = editorContentInput.innerHTML;
+    let form = document.querySelector('#form_first');
+    form.onsubmit = function(event) {
+      let editorContentInput = document.querySelector('#editorContent');
+      editorContentInput.value = quill.root.innerHTML;
+
     };    
 </script>
 {% endblock %}

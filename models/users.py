@@ -10,7 +10,8 @@ class User(Document):
     password: str
     manager: Optional[str] = None
     sellist1 : Optional[str] = None
-    text : Optional[str] = None
+    comment : Optional[str] = None
+    editorContent : Optional[str] = None
 
     class Settings:
         name = "users"
