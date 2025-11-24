@@ -2,10 +2,11 @@ from typing import List, Optional
 
 from fastapi import Form
 from pydantic import BaseModel
+from sqlmodel import Field, SQLModel
 
 
-class Todo(BaseModel):
-    id: Optional[int]
+class Todo(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     item: str
 
     @classmethod
@@ -14,15 +15,6 @@ class Todo(BaseModel):
         item: str = Form(...)
     ):
         return self(item=item)
-
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": 1,
-                "item": "Example schema!"
-            }
-        }
 
 
 class TodoItem(BaseModel):

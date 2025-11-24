@@ -3,11 +3,11 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from database.connection import Settings
+from database.connection import initialize_database
+
 
 app = FastAPI()
 
-settings = Settings()
 
 # 출처 등록
 
@@ -36,8 +36,8 @@ app.include_router(todo_router, prefix="/todo")
 
 
 @app.on_event("startup")
-async def init_db():
-    await settings.initialize_database()
+def init_db():
+    initialize_database()
 
 
 # @app.get("/")

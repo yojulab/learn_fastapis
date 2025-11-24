@@ -1,10 +1,10 @@
-from typing import Optional, List
-from beanie import Document
-
+from typing import Optional
+from sqlmodel import Field, SQLModel
 from pydantic import BaseModel, EmailStr
 
 
-class User(Document):
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     name: Optional[str] = None
     email: EmailStr
     password: str
@@ -12,17 +12,6 @@ class User(Document):
     sellist1 : Optional[str] = None
     comment : Optional[str] = None
     editorContent : Optional[str] = None
-
-    class Settings:
-        name = "users"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "fastapi@packt.com",
-                "password": "strong!!!"
-            }
-        }
 
 
 class TokenResponse(BaseModel):

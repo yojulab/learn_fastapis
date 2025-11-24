@@ -1,26 +1,25 @@
 from typing import List
-
-from beanie import PydanticObjectId
-from database.connection import Database
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from sqlmodel import Session, select
 from models.events import Event, EventUpdate
+from database.connection import engine
 
 router = APIRouter(
     tags=["Events"]
 )
 
-event_database = Database(Event)
+def get_session():
+    with Session(engine) as session:
+        yield session
 
-# 전체 내용 가져오기
 @router.get("/", response_model=List[Event])
-async def retrieve_all_events() -> List[Event]:
-    events = await event_database.get_all()
+def retrieve_all_events(session: Session = Depends(get_session)) -> List[Event]:
+    events = session.exec(select(Event)).all()
     return events
 
-# id 기준 한 row 확인
 @router.get("/{id}", response_model=Event)
-async def retrieve_event(id: PydanticObjectId) -> Event:
-    event = await event_database.get(id)
+def retrieve_event(id: int, session: Session = Depends(get_session)) -> Event:
+    event = session.get(Event, id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -28,72 +27,45 @@ async def retrieve_event(id: PydanticObjectId) -> Event:
         )
     return event
 
-# 새로운 레코드 추가
-# http://127.0.0.1:8000/events_api/new
-# {
-#         "creator": "박지민",
-#         "title": "가을 속으로",
-#         "image": "autumn_leaves.jpg",
-#         "description": "가을이 깊어가는 숲속의 오색찬란한 단풍",
-#         "tags": ["가을", "단풍", "자연", "숲"],
-#         "location": "내장산, 전라북도"
-#     }
 @router.post("/new")
-async def create_event(body: Event) -> dict:
-    document = await event_database.save(body)
+def create_event(body: Event, session: Session = Depends(get_session)) -> dict:
+    session.add(body)
+    session.commit()
+    session.refresh(body)
     return {
-        "message": "Event created successfully"
-        ,"datas": document
+        "message": "Event created successfully",
+        "datas": body
     }
 
-
 @router.put("/{id}", response_model=Event)
-async def update_event(id: PydanticObjectId, body: EventUpdate) -> Event:
-    event = await event_database.get(id)
+def update_event(id: int, body: EventUpdate, session: Session = Depends(get_session)) -> Event:
+    event = session.get(Event, id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found"
         )
-    updated_event = await event_database.update(id, body)
-    if not updated_event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Event with supplied ID does not exist"
-        )
-    return updated_event
+    
+    update_data = body.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(event, key, value)
 
-# update with json by id 
-from fastapi import Request
-@router.put("/json/{id}", response_model=Event)
-async def update_event_withjson(id: PydanticObjectId, request:Request) -> Event:
-    event = await event_database.get(id)
-    if not event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Event not found"
-        )
-    body = await request.json()
-    updated_event = await event_database.update_withjson(id, body)
-    if not updated_event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Event with supplied ID does not exist"
-        )
-    return updated_event
+    session.add(event)
+    session.commit()
+    session.refresh(event)
+    return event
 
-# ID에 따른 row 삭제
 @router.delete("/{id}")
-async def delete_event(id: PydanticObjectId) -> dict:
-    event = await event_database.get(id)
+def delete_event(id: int, session: Session = Depends(get_session)) -> dict:
+    event = session.get(Event, id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found"
         )
-    event = await event_database.delete(id)
+    session.delete(event)
+    session.commit()
 
     return {
         "message": "Event deleted successfully."
-        ,"datas": event
     }

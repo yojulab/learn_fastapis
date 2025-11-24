@@ -1,87 +1,91 @@
 from fastapi import APIRouter, Path, HTTPException, status, Request, Depends
 from fastapi.templating import Jinja2Templates
-
+from sqlmodel import Session, select
 from models.todos import Todo, TodoItem, TodoItems
+from database.connection import engine
 
 router = APIRouter()
 
-todo_list = []
-
 templates = Jinja2Templates(directory="templates/")
 
+def get_session():
+    with Session(engine) as session:
+        yield session
 
 @router.post("/")
-async def add_todo(request: Request, todo: Todo = Depends(Todo.as_form)):
-    form_data = await request.form()
-    form_data['item']
-    todo.id = len(todo_list) + 1
-    todo_list.append(todo)
+def add_todo(request: Request, todo: Todo, session: Session = Depends(get_session)):
+    session.add(todo)
+    session.commit()
+    session.refresh(todo)
+    
+    todos = session.exec(select(Todo)).all()
     return templates.TemplateResponse("todos/todo.html",
     {
         "request": request,
-        "todos": todo_list
+        "todos": todos
     })
 
 
 @router.get("/", response_model=TodoItems)
-async def retrieve_todo(request: Request):
+def retrieve_todo(request: Request, session: Session = Depends(get_session)):
+    todos = session.exec(select(Todo)).all()
     return templates.TemplateResponse("todos/todo.html", {
         "request": request,
-        "todos": todo_list
+        "todos": todos
     })
 
 
 
 @router.get("/{todo_id}")
-async def get_single_todo(request: Request, todo_id: int = Path(..., title="The ID of the todo to retrieve.")):
-    for todo in todo_list:
-        if todo.id == todo_id:
-            return templates.TemplateResponse(
-                "todos/todo.html", {
-                "request": request,
-                "todo": todo
-            })
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Todo with supplied ID doesn't exist",
-    )
-
-
+def get_single_todo(request: Request, todo_id: int = Path(..., title="The ID of the todo to retrieve."), session: Session = Depends(get_session)):
+    todo = session.get(Todo, todo_id)
+    if not todo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Todo with supplied ID doesn't exist",
+        )
+    return templates.TemplateResponse(
+        "todos/todo.html", {
+        "request": request,
+        "todo": todo
+    })
 
 @router.put("/{todo_id}")
-async def update_todo(request: Request, todo_data: TodoItem,
-                      todo_id: int = Path(..., title="The ID of the todo to be updated.")) -> dict:
-    for todo in todo_list:
-        if todo.id == todo_id:
-            todo.item = todo_data.item
-            return {
-                "message": "Todo updated successfully."
-            }
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Todo with supplied ID doesn't exist",
-    )
-
+def update_todo(request: Request, todo_data: TodoItem,
+                      todo_id: int = Path(..., title="The ID of the todo to be updated."), session: Session = Depends(get_session)) -> dict:
+    todo = session.get(Todo, todo_id)
+    if not todo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Todo with supplied ID doesn't exist",
+        )
+    todo.item = todo_data.item
+    session.add(todo)
+    session.commit()
+    return {
+        "message": "Todo updated successfully."
+    }
 
 @router.delete("/{todo_id}")
-async def delete_single_todo(request: Request, todo_id: int) -> dict:
-    for index in range(len(todo_list)):
-        todo = todo_list[index]
-        if todo.id == todo_id:
-            todo_list.pop(index)
-            return {
-                "message": "Todo deleted successfully."
-            }
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Todo with supplied ID doesn't exist",
-    )
-
+def delete_single_todo(request: Request, todo_id: int, session: Session = Depends(get_session)) -> dict:
+    todo = session.get(Todo, todo_id)
+    if not todo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Todo with supplied ID doesn't exist",
+        )
+    session.delete(todo)
+    session.commit()
+    return {
+        "message": "Todo deleted successfully."
+    }
 
 @router.delete("/")
-async def delete_all_todo() -> dict:
-    todo_list.clear()
+def delete_all_todo(session: Session = Depends(get_session)) -> dict:
+    todos = session.exec(select(Todo)).all()
+    for todo in todos:
+        session.delete(todo)
+    session.commit()
     return {
         "message": "Todos deleted successfully."
     }

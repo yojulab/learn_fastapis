@@ -9,13 +9,13 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates/")
 '''
 @router.get("/", response_class=HTMLResponse) # 펑션 호출 방식
-async def home():
+def home():
     # return {"message": "home World"}
     html = "<body> <h2>it's Home</h2> </body>"
     return html
 
 @router.get("/list") # 주로 2단계까지만 연결
-async def home_list() :
+def home_list() :
     # pass
     # return 0
     html = "<body> <h2>it's Home list</h2> </body>"
@@ -24,7 +24,7 @@ async def home_list() :
 
 
 @router.get("/", response_class=HTMLResponse) # 펑션 호출 방식
-async def root(request:Request):
+def root(request:Request):
     # return {"message": "home World"}
     return templates.TemplateResponse(name="homes/standards.html", context={'request':request})
 
@@ -33,7 +33,7 @@ async def root(request:Request):
 
 @router.get("/list") # 주로 2단계까지만 연결
 
-async def home_list() :
+def home_list() :
     # pass
     # return 0
     html = "<body> <h2>it's Home list</h2> </body>"
@@ -41,6 +41,6 @@ async def home_list() :
 
 # /homes/params_query -> /homes/parameters_query.html 호출
 @router.get("/params_query", response_class=HTMLResponse) # 펑션 호출 방식
-async def home(request:Request):
+def home(request:Request):
     # return {"message": "home World"}
     return templates.TemplateResponse(name="homes/parameters_query.html", context={'request':request})

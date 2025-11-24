@@ -1,106 +1,48 @@
-from typing import Any, List, Optional
-
-from beanie import init_beanie, PydanticObjectId
-from models.events import Event
-from models.users import User
-from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel
+import os
+import psycopg2
+from sqlmodel import create_engine, SQLModel
 from pydantic_settings import BaseSettings
-
+from typing import Optional
 
 class Settings(BaseSettings):
-    DATABASE_URL: Optional[str] = None
+    DB_HOST: Optional[str] = os.getenv("DB_HOST", "db_postgresql")
+    DB_PORT: Optional[str] = os.getenv("DB_PORT", "5432")
+    POSTGRES_DB: Optional[str] = os.getenv("POSTGRES_DB", "main_db")
+    POSTGRES_USER: Optional[str] = os.getenv("POSTGRES_USER", "admin")
+    POSTGRES_PASSWORD: Optional[str] = os.getenv("POSTGRES_PASSWORD", "admin123")
+    DATABASE_URL: Optional[str] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}"
     SECRET_KEY: Optional[str] = None
-
-    async def initialize_database(self):
-        client = AsyncIOMotorClient(self.DATABASE_URL)
-        await init_beanie(database=client.get_default_database(), 
-        document_models=[Event, User])
 
     class Config:
         env_file = ".env"
 
-from utils.paginations import Paginations
+settings = Settings()
+engine = create_engine(settings.DATABASE_URL, echo=True)
 
-import json
-class Database:
-    def __init__(self, model):
-        self.model = model
+def get_db_connection():
+    """PostgreSQL 데이터베이스에 연결합니다."""
+    try:
+        conn = psycopg2.connect(
+            host=settings.DB_HOST,
+            port=settings.DB_PORT,
+            dbname=settings.POSTGRES_DB,
+            user=settings.POSTGRES_USER,
+            password=settings.POSTGRES_PASSWORD
+        )
+        print("PostgreSQL 데이터베이스에 성공적으로 연결되었습니다.")
+        return conn
+    except psycopg2.OperationalError as e:
+        print(f"데이터베이스 연결에 실패했습니다: {e}")
+        print("연결 정보를 확인하거나 Docker 컨테이너가 실행 중인지 확인하세요.")
+        return None
 
-    async def save(self, document):
-        result = await document.create()
-        return result
-
-    async def get(self, id: PydanticObjectId):
-        doc = await self.model.get(id)
-        if doc:
-            return doc
-        return False
-
-    async def get_all(self):
-        docs = await self.model.find_all().to_list()
-        return docs
-
-    # update with params json
-    async def update_withjson(self, id: PydanticObjectId, body: json):
-        doc_id = id
-
-        # des_body = {k: v for k, v in des_body.items() if v is not None}
-        update_query = {"$set": {**body}}
-
-        doc = await self.get(doc_id)
-        if not doc:
-            return False
-        await doc.update(update_query)
-        return doc
-    
-    async def update(self, id: PydanticObjectId, body: BaseModel):
-        doc_id = id
-        des_body = body.dict()
-
-        des_body = {k: v for k, v in des_body.items() if v is not None}
-        update_query = {"$set": {
-            field: value for field, value in des_body.items()
-        }}
-
-        doc = await self.get(doc_id)
-        if not doc:
-            return False
-        await doc.update(update_query)
-        return doc
-
-    async def delete(self, id: PydanticObjectId):
-        doc = await self.get(id)
-        if not doc:
-            return False
-        await doc.delete()
-        return True
-
-    # column 값으로 여러 Documents 가져오기
-    async def getsbyconditions(self, conditions:dict) -> [Any]:
-        documents = await self.model.find(conditions).to_list()  # find({})
-        if documents:
-            return documents
-        return False    
-
-    # column 값으로 여러 Documents with pagination 가져오기
-    async def getsbyconditionswithpagination(self
-                                             , conditions:dict, page_number) -> [Any]:
-        # find({})
-        total = await self.model.find(conditions).count()
-        pagination = Paginations(total_records=total, current_page=page_number)
-        documents = await self.model.find(conditions).skip(pagination.start_record_number).limit(pagination.records_per_page).to_list()
-        if documents:
-            return documents, pagination
-        return False    
-
+def initialize_database():
+    """데이터베이스 테이블을 생성합니다."""
+    SQLModel.metadata.create_all(engine)
 
 if __name__ == '__main__':
-    settings = Settings()
-    async def init_db():
-        await settings.initialize_database()
-
-    collection_user = Database(User)
-    conditions = "{ name: { $regex: '이' } }"
-    list = collection_user.getsbyconditions(conditions)
-    pass
+    conn = get_db_connection()
+    if conn:
+        initialize_database()
+        conn.close()
+        print("\nPostgreSQL 데이터베이스 연결이 종료되었습니다.")
