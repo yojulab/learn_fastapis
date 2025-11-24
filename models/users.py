@@ -1,10 +1,10 @@
 from typing import Optional
-from sqlmodel import Field, SQLModel
+from sqlmodel import SQLModel
 from pydantic import BaseModel, EmailStr
 
 
-class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+class User(SQLModel):
+    id: Optional[int] = None
     name: Optional[str] = None
     email: EmailStr
     password: str

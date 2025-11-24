@@ -1,76 +1,113 @@
+import json
 from typing import List
+import psycopg2
+from psycopg2.extras import DictCursor
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
 from models.events import Event, EventUpdate
-from database.connection import engine
+from database.connection import get_db_connection
 from auth.authenticate import authenticate
 
 event_router = APIRouter(
     tags=["Events"]
 )
 
-def get_session():
-    with Session(engine) as session:
-        yield session
-
 @event_router.get("/", response_model=List[Event])
-def retrieve_all_events(session: Session = Depends(get_session)) -> List[Event]:
-    events = session.exec(select(Event)).all()
-    return events
+def retrieve_all_events(conn=Depends(get_db_connection)) -> List[Event]:
+    with conn.cursor(cursor_factory=DictCursor) as cur:
+        cur.execute("SELECT * FROM event")
+        events = cur.fetchall()
+    return [Event(**row) for row in events]
 
 @event_router.get("/{id}", response_model=Event)
-def retrieve_event(id: int, session: Session = Depends(get_session)) -> Event:
-    event = session.get(Event, id)
+def retrieve_event(id: int, conn=Depends(get_db_connection)) -> Event:
+    with conn.cursor(cursor_factory=DictCursor) as cur:
+        cur.execute("SELECT * FROM event WHERE id = %s", (id,))
+        event = cur.fetchone()
+    
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event with supplied ID does not exist"
         )
-    return event
+    return Event(**event)
 
-@event_router.post("/new")
-def create_event(body: Event, user: str = Depends(authenticate), session: Session = Depends(get_session)) -> dict:
+@event_router.post("/new", response_model=Event)
+def create_event(body: Event, user: str = Depends(authenticate), conn=Depends(get_db_connection)) -> Event:
     body.creator = user
-    session.add(body)
-    session.commit()
-    session.refresh(body)
-    return {
-        "message": "Event created successfully"
-    }
+    with conn.cursor(cursor_factory=DictCursor) as cur:
+        cur.execute(
+            """
+            INSERT INTO event (creator, title, image, description, tags, location)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING *
+            """,
+            (body.creator, body.title, body.image, body.description, json.dumps(body.tags), body.location)
+        )
+        new_event = cur.fetchone()
+        conn.commit()
+        
+    return Event(**new_event)
 
 @event_router.put("/{id}", response_model=Event)
-def update_event(id: int, body: EventUpdate, user: str = Depends(authenticate), session: Session = Depends(get_session)) -> Event:
-    event = session.get(Event, id)
-    if event.creator != user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Operation not allowed"
-        )
-    
-    update_data = body.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(event, key, value)
+def update_event(id: int, body: EventUpdate, user: str = Depends(authenticate), conn=Depends(get_db_connection)) -> Event:
+    with conn.cursor(cursor_factory=DictCursor) as cur:
+        cur.execute("SELECT * FROM event WHERE id = %s", (id,))
+        event = cur.fetchone()
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Event not found"
+            )
+        
+        if event["creator"] != user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Operation not allowed"
+            )
 
-    session.add(event)
-    session.commit()
-    session.refresh(event)
-    return event
+        update_data = body.dict(exclude_unset=True)
+        set_clause = []
+        params = []
+        
+        for key, value in update_data.items():
+            set_clause.append(f"{key} = %s")
+            if key == "tags":
+                params.append(json.dumps(value))
+            else:
+                params.append(value)
+        
+        if not set_clause:
+            return Event(**event) # No changes
+            
+        params.append(id)
+        
+        cur.execute(
+            f"UPDATE event SET {', '.join(set_clause)} WHERE id = %s RETURNING *",
+            tuple(params)
+        )
+        updated_event = cur.fetchone()
+        conn.commit()
+
+    return Event(**updated_event)
 
 @event_router.delete("/{id}")
-def delete_event(id: int, user: str = Depends(authenticate), session: Session = Depends(get_session)) -> dict:
-    event = session.get(Event, id)
-    if not event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Event not found"
-        )
-    if event.creator != user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Operation not allowed"
-        )
-    session.delete(event)
-    session.commit()
+def delete_event(id: int, user: str = Depends(authenticate), conn=Depends(get_db_connection)) -> dict:
+    with conn.cursor(cursor_factory=DictCursor) as cur:
+        cur.execute("SELECT * FROM event WHERE id = %s", (id,))
+        event = cur.fetchone()
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Event not found"
+            )
+        if event["creator"] != user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Operation not allowed"
+            )
+        
+        cur.execute("DELETE FROM event WHERE id = %s", (id,))
+        conn.commit()
 
     return {
         "message": "Event deleted successfully."

@@ -1,15 +1,15 @@
 from typing import Optional, List
-from sqlmodel import Field, SQLModel, JSON, Column
+from sqlmodel import SQLModel
 from pydantic import BaseModel
 
 
-class Event(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    creator: Optional[str]
+class Event(SQLModel):
+    id: Optional[int] = None
+    creator: Optional[str] = None
     title: str
     image: str
     description: str
-    tags: List[str] = Field(sa_column=Column(JSON))
+    tags: List[str]
     location: str
 
 

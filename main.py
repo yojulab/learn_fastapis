@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from database.connection import initialize_database
+from database.init_db import create_tables
 
 
 app = FastAPI()
@@ -37,7 +37,7 @@ app.include_router(todo_router, prefix="/todo")
 
 @app.on_event("startup")
 def init_db():
-    initialize_database()
+    create_tables()
 
 
 # @app.get("/")

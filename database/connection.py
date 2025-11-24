@@ -1,6 +1,5 @@
 import os
 import psycopg2
-from sqlmodel import create_engine, SQLModel
 from pydantic_settings import BaseSettings
 from typing import Optional
 
@@ -17,10 +16,10 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
-engine = create_engine(settings.DATABASE_URL, echo=True)
 
 def get_db_connection():
-    """PostgreSQL 데이터베이스에 연결합니다."""
+    """PostgreSQL 데이터베이스에 연결하고 커서를 제공하는 제너레이터입니다."""
+    conn = None
     try:
         conn = psycopg2.connect(
             host=settings.DB_HOST,
@@ -29,20 +28,7 @@ def get_db_connection():
             user=settings.POSTGRES_USER,
             password=settings.POSTGRES_PASSWORD
         )
-        print("PostgreSQL 데이터베이스에 성공적으로 연결되었습니다.")
-        return conn
-    except psycopg2.OperationalError as e:
-        print(f"데이터베이스 연결에 실패했습니다: {e}")
-        print("연결 정보를 확인하거나 Docker 컨테이너가 실행 중인지 확인하세요.")
-        return None
-
-def initialize_database():
-    """데이터베이스 테이블을 생성합니다."""
-    SQLModel.metadata.create_all(engine)
-
-if __name__ == '__main__':
-    conn = get_db_connection()
-    if conn:
-        initialize_database()
-        conn.close()
-        print("\nPostgreSQL 데이터베이스 연결이 종료되었습니다.")
+        yield conn
+    finally:
+        if conn:
+            conn.close()

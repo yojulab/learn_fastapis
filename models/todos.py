@@ -2,11 +2,11 @@ from typing import List, Optional
 
 from fastapi import Form
 from pydantic import BaseModel
-from sqlmodel import Field, SQLModel
+from sqlmodel import SQLModel
 
 
-class Todo(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+class Todo(SQLModel):
+    id: Optional[int] = None
     item: str
 
     @classmethod
